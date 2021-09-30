@@ -1,0 +1,82 @@
+# This is a basic workflow to help you get started with Actions
+
+name: XC_proj
+
+on:
+  # Trigger the workflow on push or pull request,
+  push:
+    branches:
+      - main
+  workflow_dispatch: # 手动触发
+  schedule:
+    - cron: '30 0 * * *' #utc 换算北京时间+8
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: [ '3.9' ]
+
+    steps:
+      - name: Checkout codes
+        uses: actions/checkout@v2
+        with:
+            ref: 'main'
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+            python-version: ${{ matrix.python-version }}
+            architecture: x64
+
+      - name: Install dependencies
+        run: |
+            if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Install chrome.exe and chromedriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          sudo apt-get install -y zip
+
+          echo "python报错，添加依赖"
+          sudo apt-get install -y libgconf2-4
+
+          echo "下载安装chrome应用"
+          sudo apt-get update
+          sudo wget http://security.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-codecs-ffmpeg_90.0.4430.72-0ubuntu0.16.04.1_amd64.deb
+          sudo wget http://security.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-codecs-ffmpeg-extra_90.0.4430.72-0ubuntu0.16.04.1_amd64.deb
+          sudo dpkg -i *.deb
+
+          sudo wget http://security.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-browser_90.0.4430.72-0ubuntu0.16.04.1_amd64.deb
+          sudo dpkg -i chromium-browser_90.0.4430.72-0ubuntu0.16.04.1_amd64.deb
+          sudo apt-get -f install
+
+          echo "下载chrome驱动"
+          sudo wget -N http://chromedriver.storage.googleapis.com/92.0.4515.43/chromedriver_linux64.zip
+          sudo unzip chromedriver_linux64.zip
+
+          echo "移动驱动，并删除多余"
+          sudo mv -f chromedriver ./drivers
+          sudo rm -f chromedriver_linux64.zip
+          sudo rm -f *.deb
+
+      - name: Working
+        run: |
+          echo "Hi, xc_proj..."
+          python main.py
+        env:
+          XC_account: ${{ secrets.XC_account }}
+          XC_password: ${{ secrets.XC_password }}
+          XC_cookie: ${{ secrets.XC_cookie }}
+
+          BD_APP_ID: ${{ secrets.BD_APP_ID }}
+          BD_API_KEY: ${{ secrets.BD_API_KEY }}
+          BD_SECRET_KEY: ${{ secrets.BD_SECRET_KEY }}
+
+
+

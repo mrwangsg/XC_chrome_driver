@@ -1,0 +1,24 @@
+# 手机端cookie，是pt_key=xxx;pt_pin=xxx;
+cookie: "pt_key=a;pt_pin=b"
+
+# selenium 相关
+# selenium.browserType: 浏览器类型
+# selenium.headless: 无头模式，建议默认设置
+# selenium.binary: 可执行路径，如果驱动没有找到浏览器的话需要你手动配置
+# selenium.width: 浏览器初始-宽度
+# selenium.height: 浏览器初始-高度
+selenium:
+  browserType: "Chrome"
+  headless: false
+  binary: ""
+  width: 500
+  height: 700
+
+ocr:
+  baidu:
+    APP_ID: "24927292"
+    API_KEY: "fjGKGV6zEDWWs74NENnngPOR"
+    SECRET_KEY: "nlU9Cod63F1165psFExk4lVEBZAGuRE3"
+
+# user-agent 用户代理，可自行配置
+user-agent: Mozilla/5.0 (Linux; Android 6.0.1; Nexus 7 Build/MOB30X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36
