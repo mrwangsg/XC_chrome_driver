@@ -57,6 +57,7 @@ def main():
                 return
 
         # todo 点击“立即签到”，页面跳转后，第一件事就是签到
+        crtip.page.point_sign(browser)
 
     except:
         print(traceback.format_exc())

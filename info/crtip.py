@@ -7,7 +7,7 @@
 import time
 import traceback
 
-from selenium.common.exceptions import MoveTargetOutOfBoundsException, TimeoutException
+from selenium.common.exceptions import MoveTargetOutOfBoundsException, TimeoutException, NoSuchElementException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -34,6 +34,14 @@ class page(object):
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def re_add_cookie(browser: WebDriver, cookie):
+        # 网页打开后，才能添加cookie
+        for item in cookie.split(";"):
+            name = item.split("=")[0].strip(" ")
+            value = item.split("=")[1].strip(";")
+            browser.add_cookie({"name": name, "value": value, "domain": ".ctrip.com"})
 
     @staticmethod
     def scroll(browser: WebDriver, account: str, password: str):
@@ -119,29 +127,48 @@ class page(object):
         try:
             # 真实原因，即使下面wait可以找到“立即签到”，但由于是span标签，点击事件还没注册上去。固点击也没有用
             for _ in range(Final.timeout.s10):
+                print(f"\t第{_}次，尝试点击‘立即签到’按钮！")
                 WebDriverWait(browser, Final.timeout.s10).until(
                     Exc.visibility_of_element_located((By.XPATH, "//li[@data-type='point']")),
                     message="寻找立即签到按钮，等待超时").click()
-                print(f"\t第{_}次，尝试点击‘立即签到’按钮！")
                 time.sleep(1)
+
                 if str(browser.current_url).startswith(url.activity_jump_prefix):
-                    break
+                    return True
 
             # 有可能在点击后，页面又跳到登录界面了。所以判断是否去到了“会员签到页面”
-            WebDriverWait(browser, Final.timeout.s10).until(Exc.title_is('携程会员签到'), message="跳转会员签到页面失败！")
-            return True
+            print("跳转会员签到页面失败！")
+            return False
 
         except Exception as ex:
             print(traceback.format_exc())
             return False
 
     @staticmethod
-    def re_add_cookie(browser: WebDriver, cookie):
-        # 网页打开后，才能添加cookie
-        for item in cookie.split(";"):
-            name = item.split("=")[0].strip(" ")
-            value = item.split("=")[1].strip(";")
-            browser.add_cookie({"name": name, "value": value, "domain": ".ctrip.com"})
+    def point_sign(browser: WebDriver):
+
+        try:
+            # 每个活动积分活动开始前，均应该刷新一下
+            browser.refresh()
+
+            # 阻塞寻找元素。但找到了，点击事件还不一定加载完毕。所以用execute_script解决问题
+            ele_sign_btn = browser.find_element(By.ID, "mkt_sign_onsignin")
+            browser.execute_script("arguments[0].click();", ele_sign_btn)
+
+            # 点击之后，如果跳出弹窗。则说明成功
+            ele_mtspi_num = WebDriverWait(browser, Final.timeout.s30).until(
+                Exc.visibility_of_element_located((By.CLASS_NAME, "mtspi_num")), message="等待签到成功弹窗超时！")
+
+            print(f"签到成功！恭喜您获得{ele_mtspi_num.text}积分")
+            return True
+
+        except NoSuchElementException:
+            print("今天已经完成签到任务！")
+            return True
+
+        except Exception:
+            print(traceback.format_exc())
+            return False
 
 
 @singleton
