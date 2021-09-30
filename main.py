@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-import time
 import traceback
 
 from info import crtip
@@ -63,15 +62,14 @@ def main():
         print(traceback.format_exc())
 
     finally:
-        print("程序运行结束！！！")
-
-        # todo 这里堵塞是为了调试
-        time.sleep(1000)
-
         # 关闭浏览器
+        print("程序运行结束！！！")
         if browser:
             browser.close()
             browser.quit()
+
+        # todo 这里堵塞是为了调试
+        # time.sleep(1000)
 
 
 if __name__ == '__main__':
