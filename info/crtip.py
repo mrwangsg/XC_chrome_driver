@@ -117,10 +117,16 @@ class page(object):
             page.re_add_cookie(browser, cookie)
 
         try:
-            ele_sign_btn = WebDriverWait(browser, Final.timeout.s10).until(
-                Exc.element_to_be_clickable((By.XPATH, '//span[contains(text(), "立即签到")]')), message="寻找立即签到按钮，等待超时")
+            # 真实原因，即使下面wait可以找到“立即签到”，但由于是span标签，点击事件还没注册上去。固点击也没有用
+            for _ in range(Final.timeout.s10):
+                WebDriverWait(browser, Final.timeout.s10).until(
+                    Exc.visibility_of_element_located((By.XPATH, "//li[@data-type='point']")),
+                    message="寻找立即签到按钮，等待超时").click()
+                print(f"\t第{_}次，尝试点击‘立即签到’按钮！")
+                time.sleep(1)
+                if str(browser.current_url).startswith(url.activity_jump_prefix):
+                    break
 
-            ele_sign_btn.click()
             # 有可能在点击后，页面又跳到登录界面了。所以判断是否去到了“会员签到页面”
             WebDriverWait(browser, Final.timeout.s10).until(Exc.title_is('携程会员签到'), message="跳转会员签到页面失败！")
             return True
@@ -159,6 +165,10 @@ class url(object):
     @property
     def activity_index(self):
         return str("https://m.ctrip.com/webapp/rewards/activity")
+
+    @property
+    def activity_jump_prefix(self):
+        return str("https://m.ctrip.com/activitysetupapp/mkt/index")
 
 
 url = url()
