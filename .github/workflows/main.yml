@@ -9,7 +9,7 @@ on:
       - main
   workflow_dispatch: # 手动触发
   schedule:
-    - cron: '30 16 * * *' #utc 换算北京时间+8
+    - cron: '30 22 * * *' #utc 换算北京时间+8
 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel

@@ -4,10 +4,12 @@
 # @Author  : sgwang
 # @File    : crtip.py
 # @Software: PyCharm
+import re
 import time
 import traceback
 
-from selenium.common.exceptions import MoveTargetOutOfBoundsException, TimeoutException, NoSuchElementException
+from selenium.common.exceptions import MoveTargetOutOfBoundsException, TimeoutException, NoSuchElementException, \
+    StaleElementReferenceException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -55,7 +57,7 @@ class page(object):
 
         try:
             # 等待活动校验窗口出现
-            ele_drop_btn = WebDriverWait(browser, Final.timeout.s30).until(
+            ele_drop_btn = WebDriverWait(browser, Final.timeout.s10).until(
                 Exc.visibility_of_element_located((By.CLASS_NAME, "cpt-drop-btn")), "滑动校验窗口，没有弹出")
 
             # 滑动滑块
@@ -135,6 +137,9 @@ class page(object):
 
                 if str(browser.current_url).startswith(url.activity_jump_prefix):
                     return True
+                elif str(browser.current_url).startswith(url.login_index):
+                    # 此时也有可能还没能正确登录，跳转到另外的页面，所以就会一直找不到按钮，超时
+                    return False
 
             # 有可能在点击后，页面又跳到登录界面了。所以判断是否去到了“会员签到页面”
             print("跳转会员签到页面失败！")
@@ -145,30 +150,175 @@ class page(object):
             return False
 
     @staticmethod
-    def point_sign(browser: WebDriver):
-
+    def point_sign(browser: WebDriver) -> int:
         try:
-            # 每个活动积分活动开始前，均应该刷新一下
-            browser.refresh()
-
             # 阻塞寻找元素。但找到了，点击事件还不一定加载完毕。所以用execute_script解决问题
-            ele_sign_btn = browser.find_element(By.ID, "mkt_sign_onsignin")
-            browser.execute_script("arguments[0].click();", ele_sign_btn)
+            ele_mtsh_btn = WebDriverWait(browser, Final.timeout.s10).until(
+                Exc.visibility_of_element_located((By.CLASS_NAME, "mtsh_btn")), message="寻找'签到'按钮，超时！")
+
+            # 已经签过的，直接返回0积分
+            ele_sub_span = ele_mtsh_btn.find_element(By.CSS_SELECTOR, "span")
+            if ele_sub_span.text == "已签到":
+                return int(0)
+
+            ele_sub_btn = ele_mtsh_btn.find_element(By.CSS_SELECTOR, "div")
+            browser.execute_script("arguments[0].click();", ele_sub_btn)
 
             # 点击之后，如果跳出弹窗。则说明成功
-            ele_mtspi_num = WebDriverWait(browser, Final.timeout.s30).until(
-                Exc.visibility_of_element_located((By.CLASS_NAME, "mtspi_num")), message="等待签到成功弹窗超时！")
+            ele_mtspi_num = WebDriverWait(browser, Final.timeout.s10).until(
+                Exc.visibility_of_element_located((By.CLASS_NAME, "mtspi_num")), message="等待签到成功弹窗，超时！")
 
             print(f"签到成功！恭喜您获得{ele_mtspi_num.text}积分")
-            return True
+            return int(ele_mtspi_num.text)
 
         except NoSuchElementException:
             print("今天已经完成签到任务！")
-            return True
+            return int(0)
 
         except Exception:
             print(traceback.format_exc())
-            return False
+            return int(0)
+
+    @staticmethod
+    def point_scan(browser: WebDriver) -> int:
+        try:
+            # 总获得积分，任务初始页记录
+            scan_point, scan_index_url = int(0), browser.current_url
+
+            # 前期先收集任务
+            scan_task_list = page.store_scan_tasks(browser)
+
+            # 开始做子任务
+            for _, task in enumerate(scan_task_list):
+                print(f"\t浏览任务：{_}，{task['title']}")
+                ret_point_num = page.do_scan_task(browser, scan_index_url, task)
+                print(f"\t\t该任务获得积分：{ret_point_num}")
+                scan_point += ret_point_num
+
+            return scan_point
+        except Exception:
+            print(traceback.format_exc())
+            return int(0)
+
+    @staticmethod
+    def store_scan_tasks(browser: WebDriver) -> list:
+        scan_task_list = list()
+
+        els_task_items = page.click_show_more(browser)
+        for item in els_task_items:
+            # 获取文本内容和按钮内容，匹配是否含有“浏览”和”逛逛“
+            info_text = item['ele_title'].text
+            desc_text = item['ele_desc'].get_attribute("textContent")
+            btn_text = item['ele_button'].text
+            point_num_str = item['ele_point'].text
+
+            point_num = re.compile('\\d+').search(point_num_str).group()
+
+            # 含有“浏览”和”逛逛“，并且不是已完成的。收集起来做任务
+            total_text = str(info_text) + ", " + str(btn_text) + str(desc_text)
+            if "浏览" in total_text or "逛逛" in total_text:
+                if btn_text != "已完成":
+                    scan_task_list.append({"title": info_text, "point": point_num})
+        return scan_task_list
+
+    @staticmethod
+    def do_scan_task(browser: WebDriver, flush_index_url: str, task: dict) -> int:
+        try:
+            # 重新加载页面
+            browser.get(flush_index_url)
+
+            # 弹窗更多的任务列表，等待一下，让事件加载完毕
+            els_task_items = page.click_show_more(browser)
+
+            for item in els_task_items:
+                info_text = item['ele_title'].text
+                desc_text = item['ele_desc'].get_attribute("textContent")
+                btn_text = item['ele_button'].text
+                point_num_str = item['ele_point'].text
+
+                point_num = re.compile('\\d+').search(point_num_str).group()
+                if info_text == task['title'] or desc_text == task['title']:
+                    # 点击按钮
+                    item['ele_button'].click()
+
+                    # 情况1，如果按钮是:”领奖励“，任务结束，返回积分数
+                    if btn_text == "领奖励":
+                        time.sleep(Final.timeout.s3)
+                        return int(point_num)
+
+                    else:
+                        # 情况2，按要求浏览，分：2.1等待一定时间和2.2浏览即可
+                        WebDriverWait(browser, Final.timeout.s10).until(
+                            Exc.visibility_of_element_located((By.XPATH, "//body")))
+
+                        # 再追加等待时间，防止因加载dom树，造成倒计时没有启动完全
+                        time.sleep(Final.timeout.s3)
+
+                        # 如果是要多等待一定使时间，再sleep一下
+                        desc_seconds = re.compile('\\d+s').search(desc_text)
+                        info_seconds = re.compile('\\d+s').search(info_text)
+                        if desc_seconds:
+                            wait_time = desc_seconds.group().replace("s", "")
+                            time.sleep(int(wait_time))
+
+                        elif info_seconds:
+                            wait_time = info_seconds.group().replace("s", "")
+                            time.sleep(int(wait_time))
+
+                        # 浏览完毕，重新加载页面并点击
+                        browser.get(flush_index_url)
+
+                        # 弹窗更多的任务列表，等待一下，让事件加载完毕
+                        inner_els_task_items = page.click_show_more(browser)
+                        time.sleep(Final.timeout.s3)
+
+                        for _inner_item in inner_els_task_items:
+                            _info_text = _inner_item['ele_title'].text
+                            _btn_text = _inner_item['ele_button'].text
+
+                            if _info_text == task['title'] and _btn_text == "领奖励":
+                                _inner_item['ele_button'].click()
+                                time.sleep(Final.timeout.s3)
+                                return int(point_num)
+                        return int(0)
+
+            return int(0)
+
+        except:
+            print(traceback.format_exc())
+            return int(0)
+
+    @staticmethod
+    def click_show_more(browser: WebDriver) -> list[dict]:
+        # 异步寻找元素。但找到了，点击事件还不一定加载完毕。所以用execute_script解决问题
+        ele_show_more = WebDriverWait(browser, Final.timeout.s10).until(
+            Exc.visibility_of_element_located((By.CLASS_NAME, "show_more")), message="寻找'查看更多'按钮，超时！")
+        browser.execute_script("arguments[0].click();", ele_show_more)
+
+        # 任务列表
+        task_items_tag = "//div[@class='scroll-wrapper']/div/div/div[@class='task-wraper']/div[@class='task_item']"
+        ele_task_items = WebDriverWait(browser, Final.timeout.s10).until(
+            Exc.visibility_of_all_elements_located((By.XPATH, task_items_tag)), message="获取积分任务列表，超时！")
+
+        ele_task_items_dict = list()
+        for _ in ele_task_items:
+            # todo 无法获取文本信息，可能是被隐藏的缘故
+            try:
+                ele_task_items_dict.append({
+                    "ele_title": _.find_element(By.CSS_SELECTOR, "div.title"),
+                    "ele_desc": _.find_element(By.CSS_SELECTOR, "div.desc-wrap > div"),
+                    "ele_button": _.find_element(By.CSS_SELECTOR, "div.button"),
+                    "ele_point": _.find_element(By.CSS_SELECTOR, "p.point"),
+                })
+            except StaleElementReferenceException as ex:
+                ele_task_items_dict.append({
+                    "ele_title": _.find_element(By.CSS_SELECTOR, "div.title"),
+                    "ele_desc": _.find_element(By.CSS_SELECTOR, "div.desc-wrap > div"),
+                    "ele_button": _.find_element(By.CSS_SELECTOR, "div.button"),
+                    "ele_point": _.find_element(By.CSS_SELECTOR, "p.point"),
+                })
+
+        return ele_task_items_dict
 
 
 @singleton

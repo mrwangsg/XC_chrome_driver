@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import time
 import traceback
 
 from info import crtip
@@ -56,9 +57,26 @@ def main():
                 print(f"立即签到点击，跳转失败！退出程序！！！")
                 return
 
-        # todo 点击“立即签到”，页面跳转后，第一件事就是签到
-        crtip.page.point_sign(browser)
+        # 接下来所有的操作，出发点页面
+        point_url = str(browser.current_url)
+        point_01, point_02 = int(0), int(0)
 
+        # 点击“立即签到”，页面跳转后，第一件事就是签到
+        print(os.linesep + "====================开始签到任务，积分=====================")
+        browser.get(point_url)
+        point_01 += crtip.page.point_sign(browser)
+        print(f"===================收获{point_01}积分，任务结束！！！==================" + os.linesep)
+
+        # 点击更多，操作浏览就能收到积分的页面
+        print(os.linesep + "=====================开始浏览任务，积分====================")
+        browser.get(point_url)
+        point_02 += crtip.page.point_scan(browser)
+        print(f"===================收获{point_02}积分，任务结束！！！===================" + os.linesep)
+
+        point_total = point_01 + point_02
+        print(os.linesep + "========================================================")
+        print(f"======================总共获取{point_total}积分======================")
+        print("========================================================" + os.linesep)
     except:
         print(traceback.format_exc())
 
