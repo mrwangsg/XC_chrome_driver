@@ -39,10 +39,14 @@ jobs:
 
       - name: remove default chrome.exe
         run: |
-          sudo google-chrome --version
-          sudo apt-get purge google-chrome-stable
-          sudo apt-get autoremove
-          sudo rm -rf ~/.config/google-chrome
+
+      - name: remove default chrome.exe
+        run: |
+          sudo apt-get purge chromium-browser
+          sudo rm -rf ~/.config/chromium
+          sudo rm -rf ~/.cache/chromium
+          sudo rm -rf /etc/chromium
+          sudo rm -rf /usr/bin/chromium
 
       - name: Install chrome.exe and chromedriver
         run: |
