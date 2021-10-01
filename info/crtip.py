@@ -289,7 +289,7 @@ class page(object):
             return int(0)
 
     @staticmethod
-    def click_show_more(browser: WebDriver) -> list[dict]:
+    def click_show_more(browser: WebDriver) -> list:
         # 异步寻找元素。但找到了，点击事件还不一定加载完毕。所以用execute_script解决问题
         ele_show_more = WebDriverWait(browser, Final.timeout.s10).until(
             Exc.visibility_of_element_located((By.CLASS_NAME, "show_more")), message="寻找'查看更多'按钮，超时！")
