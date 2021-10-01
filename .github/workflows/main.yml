@@ -36,15 +36,16 @@ jobs:
       - name: Install dependencies
         run: |
             if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Install chrome.exe and chromedriver
+      
+      - name: remove default chrome.exe
         run: |
           sudo google-chrome --version
           sudo apt-get purge google-chrome-stable
           sudo apt-get autoremove
           sudo rm -rf ~/.config/google-chrome
-          sudo google-chrome --version
-          
+      
+      - name: Install chrome.exe and chromedriver
+        run: |
           sudo apt-get update
           sudo apt-get install -y wget
           sudo apt-get install -y zip
