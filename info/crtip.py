@@ -16,6 +16,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as Exc
 from selenium.webdriver.support.wait import WebDriverWait
 
+from info.cond import cond
 from ocr.baiduocr import ocrapi
 from utils import Final
 
@@ -214,10 +215,12 @@ class page(object):
 
             point_num = re.compile('\\d+').search(point_num_str).group()
 
-            # 含有“浏览”和”逛逛“，并且不是已完成的。收集起来做任务
+            # 前提：非已完成任务，
+            # 然后，匹配到含有：“浏览”和”逛逛“ 或者 配置文件加的info_text任务
+            # ，并且不是已完成的。收集起来做任务
             total_text = str(info_text) + ", " + str(btn_text) + str(desc_text)
-            if "浏览" in total_text or "逛逛" in total_text:
-                if btn_text != "已完成":
+            if cond.btn_status(btn_text) != 0:
+                if cond.task_should_do(total_text) or cond.task_should_do(info_text):
                     scan_task_list.append({"title": info_text, "point": point_num})
         return scan_task_list
 
@@ -237,17 +240,17 @@ class page(object):
                 point_num_str = item['ele_point'].text
 
                 point_num = re.compile('\\d+').search(point_num_str).group()
-                if info_text == task['title'] or desc_text == task['title']:
+                if info_text == task['title']:
                     # 点击按钮
                     item['ele_button'].click()
 
-                    # 情况1，如果按钮是:”领奖励“，任务结束，返回积分数
-                    if btn_text == "领奖励":
+                    # 如果按钮是:”领奖励“，任务完成，直接返回积分
+                    if cond.btn_status(btn_text) == 1:
                         time.sleep(Final.timeout.s3)
                         return int(point_num)
 
                     else:
-                        # 情况2，按要求浏览，分：2.1等待一定时间和2.2浏览即可
+                        # 按要求浏览，分：1等待一定时间，2进去即可
                         WebDriverWait(browser, Final.timeout.s10).until(
                             Exc.visibility_of_element_located((By.XPATH, "//body")))
 
@@ -255,15 +258,13 @@ class page(object):
                         time.sleep(Final.timeout.s3)
 
                         # 如果是要多等待一定使时间，再sleep一下
-                        desc_seconds = re.compile('\\d+s').search(desc_text)
-                        info_seconds = re.compile('\\d+s').search(info_text)
-                        if desc_seconds:
-                            wait_time = desc_seconds.group().replace("s", "")
-                            time.sleep(int(wait_time))
+                        desc_seconds = cond.task_wait_seconds(desc_text)
+                        info_seconds = cond.task_wait_seconds(info_text)
 
-                        elif info_seconds:
-                            wait_time = info_seconds.group().replace("s", "")
-                            time.sleep(int(wait_time))
+                        # 详情时间首先执行。如果为0，再考虑标题时间
+                        time.sleep(desc_seconds)
+                        if desc_seconds == 0:
+                            time.sleep(info_seconds)
 
                         # 浏览完毕，重新加载页面并点击
                         browser.get(flush_index_url)
@@ -276,12 +277,13 @@ class page(object):
                             _info_text = _inner_item['ele_title'].text
                             _btn_text = _inner_item['ele_button'].text
 
-                            if _info_text == task['title'] and _btn_text == "领奖励":
+                            if _info_text == task['title'] and cond.btn_status(_btn_text) == 1:
                                 _inner_item['ele_button'].click()
                                 time.sleep(Final.timeout.s3)
                                 return int(point_num)
                         return int(0)
 
+            # 匹配不到任务时，返回0积分
             return int(0)
 
         except:

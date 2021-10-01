@@ -6,6 +6,7 @@ import time
 import traceback
 
 from info import crtip
+from info.cond import cond
 from ocr.baiduocr import ocrapi
 from utils.config import get_config
 from utils.selenium_browser import get_browser
@@ -24,6 +25,10 @@ def main():
     try:
         # 加载配置文件
         config = get_config()
+
+        # 添加自定义任务
+        config_task = get_config("add_tasks.yaml")
+        cond.add_config_task(config_task['task_list'])
 
         # 根据配置文件，初始化浏览器
         browser = get_browser(config)

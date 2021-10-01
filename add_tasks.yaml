@@ -1,0 +1,25 @@
+task_list:
+  # ==========样例，除了活动06，其它均加入任务循环===============
+  - title_text: '参加活动01'
+    end_date: "2030-11-02"
+
+  - title_text: '参加活动02'
+    end_date: "  "
+
+  - title_text: '参加活动03'
+    end_date: ""
+
+  - title_text: '参加活动04'
+    end_date:
+
+  - title_text: '参加活动05'
+
+  - title_text: '参加活动01'
+    end_date: "1900-01-02"
+  # ==========样例，除了活动06，其它均加入任务循环===============
+  - title_text: '点亮城市活动'
+    end_date: "2021-10-12"
+  - title_text: '大浪淘沙'
+    end_date: "2021-10-12"
+
+
