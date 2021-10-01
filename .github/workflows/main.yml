@@ -65,10 +65,12 @@ jobs:
           sudo mv -f chromedriver ./drivers
           sudo rm -f chromedriver_linux64.zip
           sudo rm -f *.deb
-
+          
+          sudo chmod 777 chromedriver
           cd ./drivers
           sudo ls -l
           cd ..
+          sudo ls -l
 
 
       - name: Working
@@ -83,4 +85,6 @@ jobs:
           BD_APP_ID: ${{ secrets.BD_APP_ID }}
           BD_API_KEY: ${{ secrets.BD_API_KEY }}
           BD_SECRET_KEY: ${{ secrets.BD_SECRET_KEY }}
+
+
 
