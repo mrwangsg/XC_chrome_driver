@@ -57,7 +57,7 @@ jobs:
           sudo apt-get -f install
 
           echo "下载chrome驱动"
-          sudo wget -N http://chromedriver.storage.googleapis.com/92.0.4515.43/chromedriver_linux64.zip
+          sudo wget -N http://chromedriver.storage.googleapis.com/90.0.4430.24/chromedriver_linux64.zip
           sudo unzip chromedriver_linux64.zip
 
           echo "移动驱动，并删除多余"
@@ -77,6 +77,3 @@ jobs:
           BD_APP_ID: ${{ secrets.BD_APP_ID }}
           BD_API_KEY: ${{ secrets.BD_API_KEY }}
           BD_SECRET_KEY: ${{ secrets.BD_SECRET_KEY }}
-
-
-

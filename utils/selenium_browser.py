@@ -34,14 +34,18 @@ def get_browser(_config):
                 chrome_options.add_argument('--headless')
                 chrome_options.add_argument('--disable-gpu')
             if sys.platform == 'linux':
-                _browser = webdriver.Chrome(executable_path=get_file("./drivers/chromedriver"), desired_capabilities={},
-                                            options=chrome_options)
+
+                _browser = webdriver.Chrome(
+                    executable_path=get_file("." + os.sep + "drivers" + os.sep + "chromedriver"),
+                    desired_capabilities={}, options=chrome_options)
             elif sys.platform == 'darwin':
-                _browser = webdriver.Chrome(executable_path=get_file("./drivers/chromedriver"), desired_capabilities={},
-                                            options=chrome_options)
+                _browser = webdriver.Chrome(
+                    executable_path=get_file("." + os.sep + "drivers" + os.sep + "chromedriver"),
+                    desired_capabilities={}, options=chrome_options)
             elif sys.platform == 'win32':
-                _browser = webdriver.Chrome(executable_path=get_file("./drivers/chromedriver"), desired_capabilities={},
-                                            options=chrome_options)
+                _browser = webdriver.Chrome(
+                    executable_path=get_file("." + os.sep + "drivers" + os.sep + "chromedriver"),
+                    desired_capabilities={}, options=chrome_options)
             _browser.set_window_size(width, height)
         elif browser_type == 'Edge':
             from msedge.selenium_tools import Edge, EdgeOptions
