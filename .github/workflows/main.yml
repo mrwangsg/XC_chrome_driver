@@ -61,9 +61,15 @@ jobs:
           sudo unzip chromedriver_linux64.zip
 
           echo "移动驱动，并删除多余"
+          sudo ls -l
           sudo mv -f chromedriver ./drivers
           sudo rm -f chromedriver_linux64.zip
           sudo rm -f *.deb
+          
+          sudo cd ./drivers
+          sudo ls -l
+          sudo cd ..
+          
 
       - name: Working
         run: |
@@ -77,6 +83,4 @@ jobs:
           BD_APP_ID: ${{ secrets.BD_APP_ID }}
           BD_API_KEY: ${{ secrets.BD_API_KEY }}
           BD_SECRET_KEY: ${{ secrets.BD_SECRET_KEY }}
-
-
 
