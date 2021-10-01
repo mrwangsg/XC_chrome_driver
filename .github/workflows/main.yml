@@ -40,6 +40,10 @@ jobs:
       - name: Install chrome.exe and chromedriver
         run: |
           sudo google-chrome --version
+          sudo apt-get purge google-chrome-stable
+          sudo apt-get autoremove
+          sudo rm -rf ~/.config/google-chrome
+          sudo google-chrome --version
           
           sudo apt-get update
           sudo apt-get install -y wget
