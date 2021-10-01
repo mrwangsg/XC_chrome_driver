@@ -65,11 +65,11 @@ jobs:
           sudo mv -f chromedriver ./drivers
           sudo rm -f chromedriver_linux64.zip
           sudo rm -f *.deb
-          
-          sudo cd ./drivers
+
+          cd ./drivers
           sudo ls -l
-          sudo cd ..
-          
+          cd ..
+
 
       - name: Working
         run: |
