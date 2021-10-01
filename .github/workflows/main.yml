@@ -48,6 +48,11 @@ jobs:
           sudo rm -rf /etc/chromium
           sudo rm -rf /usr/bin/chromium
 
+          sudo google-chrome --version
+          sudo apt-get purge google-chrome-stable
+          sudo apt-get autoremove
+          sudo rm -rf ~/.config/google-chrome
+
       - name: Install chrome.exe and chromedriver
         run: |
           sudo apt-get update
