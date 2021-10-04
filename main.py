@@ -100,13 +100,17 @@ if __name__ == '__main__':
     print_hi('PyCharm')
 
     # baidu-aip参数
-    BD_APP_ID = os.environ['BD_APP_ID'] if "BD_APP_ID" in os.environ else None
-    BD_API_KEY = os.environ['BD_API_KEY'] if "BD_API_KEY" in os.environ else None
-    BD_SECRET_KEY = os.environ['BD_SECRET_KEY'] if "BD_SECRET_KEY" in os.environ else None
+    BD_APP_ID = os.environ['BD_APP_ID'] \
+        if "BD_APP_ID" in os.environ and os.environ['BD_APP_ID'] != "" else None
+    BD_API_KEY = os.environ['BD_API_KEY'] \
+        if "BD_API_KEY" in os.environ and os.environ['BD_API_KEY'] != "" else None
+    BD_SECRET_KEY = os.environ['BD_SECRET_KEY'] \
+        if "BD_SECRET_KEY" in os.environ and os.environ['BD_SECRET_KEY'] != "" else None
 
-    XC_account = os.environ['XC_account'] if "XC_account" in os.environ else None
-    XC_password = os.environ['XC_password'] if "XC_password" in os.environ else None
-    XC_cookie = os.environ['XC_cookie'] if "XC_cookie" in os.environ else None
+    XC_account = os.environ['XC_account'] if "XC_account" in os.environ and os.environ['XC_account'] != "" else None
+    XC_password = os.environ['XC_password'] if "XC_password" in os.environ and os.environ['XC_password'] != "" else None
+    XC_cookie = os.environ['XC_cookie'] if "XC_cookie" in os.environ and os.environ['XC_cookie'] != "" else None
+
     if XC_cookie is None:
         print("携程Cookie不能为空！请配置：XC_cookie")
         sys.exit(-1)
