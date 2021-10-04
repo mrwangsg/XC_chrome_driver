@@ -54,7 +54,7 @@ class page(object):
 
         ele_account.send_keys(account)
         ele_password.send_keys(password)
-        ele_login_btn.click()
+        browser.execute_script("arguments[0].click();", ele_login_btn)
 
         try:
             # 等待活动校验窗口出现
