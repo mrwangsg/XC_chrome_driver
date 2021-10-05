@@ -4,6 +4,7 @@
 # @Author  : sgwang
 # @File    : crtip.py
 # @Software: PyCharm
+import os
 import re
 import time
 import traceback
@@ -19,6 +20,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from info.cond import cond
 from ocr.baiduocr import ocrapi
 from utils import Final
+from utils.config import get_config
 
 
 def singleton(cls):
@@ -304,7 +306,7 @@ class page(object):
 
         ele_task_items_dict = list()
         for _ in ele_task_items:
-            # todo 无法获取文本信息，可能是被隐藏的缘故
+            # 无法获取文本信息，可能是被隐藏的缘故
             try:
                 ele_task_items_dict.append({
                     "ele_title": _.find_element(By.CSS_SELECTOR, "div.title"),
@@ -352,6 +354,62 @@ class url(object):
 
 url = url()
 page = page()
+
+
+def main(browser: WebDriver, xc_cookie: str, xc_account: str, xc_password: str, _ocr_api=None):
+    try:
+        # 添加自定义任务
+        config_task = get_config("ext_conf" + os.sep + "xc_add_tasks.yaml")
+        cond.add_config_task(config_task['task_list'])
+
+        # 先来到活动页面，选择“立即签到”
+        print("方法1，直接使用配置的Cookie登录...")
+        sign_status = page.activity(browser, xc_cookie)
+
+        if sign_status:
+            print(f"立即签到点击，跳转成功！选择后，跳转页面链接：{browser.current_url}")
+
+        elif (xc_account is not None) and (xc_password is not None):
+            # 进入登录页面
+            print("方法2，尝试使用账号和密码登录...")
+            login_status = page.login(browser, xc_account, xc_password, _ocr_api)
+            if login_status is False:
+                print("使用账号和密码登录失败，退出程序！！！")
+                return
+
+            print(f"使用账号和密码登录成功！当前页面链接：{browser.current_url}")
+            sign_status = page.activity(browser)
+            if sign_status is False:
+                print(f"立即签到点击，跳转失败！退出程序！！！")
+                return
+
+        # 接下来所有的操作，出发点页面
+        point_url = str(browser.current_url)
+        point_01, point_02 = int(0), int(0)
+
+        # 点击“立即签到”，页面跳转后，第一件事就是签到
+        print(os.linesep + "====================开始签到任务，积分=====================")
+        browser.get(point_url)
+        point_01 += page.point_sign(browser)
+        print(f"===================收获{point_01}积分，任务结束！！！==================" + os.linesep)
+
+        # 点击更多，操作浏览就能收到积分的页面
+        print(os.linesep + "=====================开始浏览任务，积分====================")
+        browser.get(point_url)
+        point_02 += page.point_scan(browser)
+        print(f"===================收获{point_02}积分，任务结束！！！===================" + os.linesep)
+
+        point_total = point_01 + point_02
+        print(os.linesep + "========================================================")
+        print(f"======================总共获取{point_total}积分======================")
+        print("========================================================" + os.linesep)
+
+    except:
+        print(traceback.format_exc())
+
+    finally:
+        print("携程任务运行结束！！！")
+
 
 if __name__ == "__main__":
     from info import crtip

@@ -69,7 +69,7 @@ if __name__ == "__main__":
         {'title_text': '参加活动03'}
     ]
 
-    red_task = yaml.safe_load(open("../add_tasks.yaml", 'r', encoding='utf-8'))
+    red_task = yaml.safe_load(open("ext_conf/xc_add_tasks.yaml", 'r', encoding='utf-8'))
 
     cond.add_config_task(wri_task)
     print(cond.task_should_do("参加活动01"))
